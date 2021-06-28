@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.3;
 
+import { ILendingPool } from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract FriendPool {
     uint maxMembers;
@@ -24,6 +26,10 @@ contract FriendPool {
         _;
     }
 
+    address private AaveToken = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9;
+    address private daiAddress = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    IERC20 daiToken = IERC20(daiAddress);
+
     constructor(
         address _owner,
         string memory _poolName,
@@ -38,7 +44,7 @@ contract FriendPool {
         poolOwner = _owner;
     }
 
-    function joinPool() public {
+    function joinPool() hasAlreadyReachedLimit() public {
         require(currentMembers < maxMembers, 'Pool is already full');
         require(!poolMembers[msg.sender].hasJoined,
                 'You are already a member of the pool');
@@ -47,13 +53,14 @@ contract FriendPool {
         currentMembers++;
     }
 
-    function addfunds() public payable {
+    function addfunds(uint amount) hasAlreadyReachedLimit() external {
         require(poolMembers[msg.sender].hasJoined,
                 'You are not a member of this pool');
-        require(msg.value == installmentValue,
+        require(amount == installmentValue,
                 'installment amount is not equal to installment value');
 
-        transferFrom(msg.sender, )
+        // daiToken.transferFrom(msg.sender, address(this), amount);
+        ILendingPool(AaveToken).deposit(diaAddress, amount, msg.sender, '0');
         poolMembers[msg.sender].installmentCount++;
 
     }
